@@ -1,13 +1,10 @@
 import streamlit as st
 import joblib
-import json
 import numpy as np
+import pandas as pd
 
-# Load model, scaler, fitur
-model  = joblib.load('model.pkl')
-scaler = joblib.load('scaler.pkl')
-with open('fitur.json') as f:
-    fitur = json.load(f)
+# Load model
+model = joblib.load('model.pkl')
 
 # Konfigurasi halaman
 st.set_page_config(
@@ -24,19 +21,19 @@ st.divider()
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.slider("Usia", 18, 60, 22)
-    academic_pressure = st.slider("Tekanan Akademik (0-5)", 0, 5, 3)
-    cgpa = st.slider("CGPA (0.0 - 10.0)", 0.0, 10.0, 7.5, step=0.1)
+    age                = st.slider("Usia", 18, 60, 22)
+    academic_pressure  = st.slider("Tekanan Akademik (0-5)", 0, 5, 3)
+    cgpa               = st.slider("CGPA (0.0 - 10.0)", 0.0, 10.0, 7.5, step=0.1)
     study_satisfaction = st.slider("Kepuasan Belajar (0-5)", 0, 5, 3)
-    work_study_hours = st.slider("Jam Belajar per Hari (0-12)", 0, 12, 6)
+    work_study_hours   = st.slider("Jam Belajar per Hari (0-12)", 0, 12, 6)
 
 with col2:
-    financial_stress = st.slider("Stres Finansial (1-5)", 1, 5, 3)
-    sleep_duration = st.selectbox(
+    financial_stress  = st.slider("Stres Finansial (1-5)", 1, 5, 3)
+    sleep_duration    = st.selectbox(
         "Durasi Tidur",
         ['Less than 5 hours', '5-6 hours', '7-8 hours', 'More than 8 hours']
     )
-    dietary_habits = st.selectbox(
+    dietary_habits    = st.selectbox(
         "Pola Makan",
         ['Unhealthy', 'Moderate', 'Healthy']
     )
@@ -47,32 +44,41 @@ with col2:
 
 st.divider()
 
-# Encode input sesuai preprocessing waktu training
+# Encode input
 sleep_map    = {'Less than 5 hours': 0, '5-6 hours': 1,
                 '7-8 hours': 2, 'More than 8 hours': 3}
 diet_map     = {'Unhealthy': 0, 'Moderate': 1, 'Healthy': 2}
 suicidal_map = {'No': 0, 'Yes': 1}
 
 input_dict = {
-    'Age'                                   : age,
-    'Academic Pressure'                     : academic_pressure,
-    'CGPA'                                  : cgpa,
-    'Study Satisfaction'                    : study_satisfaction,
-    'Sleep Duration'                        : sleep_map[sleep_duration],
-    'Dietary Habits'                        : diet_map[dietary_habits],
-    'Have you ever had suicidal thoughts ?' : suicidal_map[suicidal_thoughts],
-    'Work/Study Hours'                      : work_study_hours,
-    'Financial Stress'                      : financial_stress,
+    'Age'                                    : age,
+    'Academic Pressure'                      : academic_pressure,
+    'CGPA'                                   : cgpa,
+    'Study Satisfaction'                     : study_satisfaction,
+    'Sleep Duration'                         : sleep_map[sleep_duration],
+    'Dietary Habits'                         : diet_map[dietary_habits],
+    'Have you ever had suicidal thoughts ?'  : suicidal_map[suicidal_thoughts],
+    'Work/Study Hours'                       : work_study_hours,
+    'Financial Stress'                       : financial_stress,
 }
 
-# Susun input sesuai urutan fitur waktu training
-input_values = np.array([[input_dict[f] for f in fitur]])
-input_scaled = scaler.transform(input_values)
+# Susun input sebagai array (urutan harus sama seperti saat training)
+input_values = np.array([[
+    input_dict['Age'],
+    input_dict['Academic Pressure'],
+    input_dict['CGPA'],
+    input_dict['Study Satisfaction'],
+    input_dict['Sleep Duration'],
+    input_dict['Dietary Habits'],
+    input_dict['Have you ever had suicidal thoughts ?'],
+    input_dict['Work/Study Hours'],
+    input_dict['Financial Stress'],
+]])
 
 # Tombol Prediksi
 if st.button("🔍 Prediksi Sekarang", use_container_width=True):
-    hasil        = model.predict(input_scaled)[0]
-    probas       = model.predict_proba(input_scaled)[0]
+    hasil        = model.predict(input_values)[0]
+    probas       = model.predict_proba(input_values)[0]
     prob_depresi = round(probas[1] * 100, 1)
 
     st.divider()
